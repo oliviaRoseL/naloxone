@@ -32,3 +32,16 @@ python ingestion/arcgis_locations_sync.py
 ```
 
 The script exits `0` on success (including no-op when already running) and `1` on failure.
+
+## JSON-only variant (no database writes)
+
+Use this when you want ArcGIS data transformed and saved to a JSON file instead of writing to Postgres.
+
+```bash
+python ingestion/arcgis_locations_to_json.py
+```
+
+Optional env vars for JSON export:
+
+- `OUTPUT_JSON_PATH` (default `ingestion/output/arcgis_locations.json`)
+- `INCLUDE_RAW_JSON` (default `true`)
