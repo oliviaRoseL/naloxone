@@ -1,6 +1,7 @@
 import React from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 
 import type { AppLocale, NaloxoneRecord } from '@/types/naloxone';
 
@@ -41,7 +42,7 @@ export function NaloxoneLocationList({
         <Text style={styles.sheetMeta}>Showing top {records.length}</Text>
       </View>
 
-      <ScrollView style={styles.resultList} contentContainerStyle={styles.resultListContent}>
+      <BottomSheetScrollView style={styles.resultList} contentContainerStyle={styles.resultListContent}>
         {records.map((record) => {
           const details = record[locale];
           const isSelected = record.source_record_id === selectedRecordId;
@@ -98,19 +99,15 @@ export function NaloxoneLocationList({
             </Pressable>
           );
         })}
-      </ScrollView>
+      </BottomSheetScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   sheetContainer: {
+    flex: 1,
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    borderTopWidth: 2,
-    borderTopColor: '#f2a85a',
-    paddingTop: 2,
   },
   sheetHeader: {
     paddingHorizontal: 14,
@@ -133,7 +130,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultList: {
-    maxHeight: 300,
+    flex: 1,
   },
   resultListContent: {
     paddingHorizontal: 12,

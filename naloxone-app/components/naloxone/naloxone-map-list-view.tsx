@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 import { NaloxoneLocationList } from '@/components/naloxone/naloxone-location-list';
 import { NaloxoneMapPanel } from '@/components/naloxone/naloxone-map-panel';
@@ -16,7 +17,6 @@ type NaloxoneMapListViewProps = {
   locationDenied: boolean;
   markerLimit: number;
   listLimit: number;
-  onBack: () => void;
   onLocaleChange: (locale: AppLocale) => void;
   onSearchModeChange: (mode: SearchMode) => void;
   onQueryChange: (query: string) => void;
@@ -33,7 +33,6 @@ export function NaloxoneMapListView({
   locationDenied,
   markerLimit,
   listLimit,
-  onBack,
   onLocaleChange,
   onSearchModeChange,
   onQueryChange,
@@ -44,27 +43,22 @@ export function NaloxoneMapListView({
     [filteredRecords, listLimit, markerLimit]
   );
 
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ['15%', '50%', '90%'], []);
+
   const mapMarkers = syncedVisibleRecords.slice(0, markerLimit);
   const listRecords = syncedVisibleRecords.slice(0, listLimit);
 
-  const searchPlaceholder =
-    searchMode === 'city'
-      ? 'Search city (e.g. Brampton)'
-      : searchMode === 'postal'
-        ? 'Search postal code (e.g. L6T 5P9)'
-        : 'Search address, city, or postal code';
+  const searchPlaceholder = 'Search address, city, or postal code';
 
   return (
     <View style={styles.mapScreen}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Find Naloxone</Text>
           <Text style={styles.headerSubtitle}>Nearby locations with availability</Text>
         </View>
         <View style={styles.headerActions}>
-          <Pressable style={styles.secondaryButton} onPress={onBack}>
-            <Text style={styles.secondaryButtonLabel}>Back</Text>
-          </Pressable>
           <View style={styles.localeRow}>
             <Pressable onPress={() => onLocaleChange('en')} style={[styles.localeButton, locale === 'en' && styles.localeButtonActive]}>
               <Text style={[styles.localeLabel, locale === 'en' && styles.localeLabelActive]}>EN</Text>
@@ -81,32 +75,18 @@ export function NaloxoneMapListView({
           <Ionicons name="search" size={18} color="#6b7280" />
           <TextInput
             value={query}
-            onChangeText={onQueryChange}
-            autoCapitalize={searchMode === 'postal' ? 'characters' : 'words'}
+            onChangeText={(text) => {
+              onQueryChange(text);
+              onSearchModeChange(text.trim() === '' ? 'nearby' : 'city'); // Using 'city' as a general search mode to trigger the all-fields filter
+            }}
             placeholder={searchPlaceholder}
             placeholderTextColor="#6b7280"
             style={styles.searchInput}
           />
-        </View>
-
-        <View style={styles.searchModeRow}>
-          <Pressable
-            onPress={() => onSearchModeChange('nearby')}
-            style={[styles.modeButton, searchMode === 'nearby' && styles.modeButtonActive]}>
-            <Text style={[styles.modeButtonLabel, searchMode === 'nearby' && styles.modeButtonLabelActive]}>Nearby</Text>
-          </Pressable>
-          <Pressable onPress={() => onSearchModeChange('city')} style={[styles.modeButton, searchMode === 'city' && styles.modeButtonActive]}>
-            <Text style={[styles.modeButtonLabel, searchMode === 'city' && styles.modeButtonLabelActive]}>City</Text>
-          </Pressable>
-          <Pressable onPress={() => onSearchModeChange('postal')} style={[styles.modeButton, searchMode === 'postal' && styles.modeButtonActive]}>
-            <Text style={[styles.modeButtonLabel, searchMode === 'postal' && styles.modeButtonLabelActive]}>Postal</Text>
+          <Pressable style={styles.locationIconBtn} onPress={() => { onQueryChange(''); onSearchModeChange('nearby'); }}>
+            <Ionicons name="navigate" size={18} color="#fc6b0f" />
           </Pressable>
         </View>
-
-        <Pressable style={styles.locationButton} onPress={() => onSearchModeChange('nearby')}>
-          <Ionicons name="navigate" size={14} color="#ffffff" />
-          <Text style={styles.locationButtonLabel}>Use My Location</Text>
-        </Pressable>
 
         {searchMode === 'nearby' && locationDenied ? (
           <Text style={styles.warningText}>
@@ -137,13 +117,22 @@ export function NaloxoneMapListView({
         </View>
       </View>
 
-      <NaloxoneLocationList
-        selectedRecordId={selectedRecordId}
-        records={listRecords}
-        locale={locale}
-        onSelectRecord={onSelectRecord}
-        totalMatches={filteredRecords.length}
-      />
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={1}
+        snapPoints={snapPoints}
+        enablePanDownToClose={false}
+        backgroundStyle={styles.bottomSheetBackground}
+        handleIndicatorStyle={styles.bottomSheetIndicator}
+      >
+        <NaloxoneLocationList
+          selectedRecordId={selectedRecordId}
+          records={listRecords}
+          locale={locale}
+          onSelectRecord={onSelectRecord}
+          totalMatches={filteredRecords.length}
+        />
+      </BottomSheet>
     </View>
   );
 }
@@ -151,57 +140,58 @@ export function NaloxoneMapListView({
 const styles = StyleSheet.create({
   mapScreen: {
     flex: 1,
-    backgroundColor: '#ffdfcc',
+    backgroundColor: '#ffffff',
     paddingTop: 44,
-    paddingHorizontal: 12,
   },
   header: {
     backgroundColor: '#f2a85a',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
     color: '#1f2937',
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '700',
   },
   headerSubtitle: {
     color: '#374151',
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
   },
   headerActions: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   secondaryButton: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#f58e40',
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
   secondaryButtonLabel: {
     color: '#9a3412',
     fontWeight: '600',
+    fontSize: 12,
   },
   localeRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   localeButton: {
     borderWidth: 1,
     borderColor: '#f58e40',
-    borderRadius: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     backgroundColor: '#fff7ed',
   },
   localeButtonActive: {
@@ -211,19 +201,17 @@ const styles = StyleSheet.create({
   localeLabel: {
     color: '#9a3412',
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: 11,
   },
   localeLabelActive: {
     color: '#ffffff',
   },
   searchCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#fed7aa',
-    padding: 12,
-    gap: 8,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   searchInputRow: {
     flexDirection: 'row',
@@ -231,63 +219,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f9fafb',
     paddingHorizontal: 10,
-    minHeight: 44,
+    minHeight: 40,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     color: '#111827',
+    fontSize: 14,
   },
-  searchModeRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  modeButton: {
-    flex: 1,
+  locationIconBtn: {
+    padding: 6,
     backgroundColor: '#fff7ed',
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#fdba74',
-    borderRadius: 8,
-    paddingVertical: 7,
-    alignItems: 'center',
-  },
-  modeButtonActive: {
-    backgroundColor: '#fc6b0f',
-    borderColor: '#fc6b0f',
-  },
-  modeButtonLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9a3412',
-  },
-  modeButtonLabelActive: {
-    color: '#ffffff',
-  },
-  locationButton: {
-    backgroundColor: '#fc6b0f',
-    borderRadius: 10,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  locationButtonLabel: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 13,
+    borderColor: '#fed7aa',
   },
   warningText: {
     color: '#b45309',
-    fontSize: 12,
+    fontSize: 11,
+    marginTop: 6,
   },
   mapContainer: {
     flex: 1,
     position: 'relative',
-    marginBottom: 10,
   },
   legendCard: {
     position: 'absolute',
@@ -296,10 +253,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 5,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   legendRow: {
     flexDirection: 'row',
@@ -307,9 +269,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   legendDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   legendDotActive: {
     backgroundColor: '#fc6b0f',
@@ -319,10 +281,25 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     color: '#111827',
-    fontSize: 12,
+    fontSize: 11,
   },
   markerInfo: {
-    color: '#4b5563',
-    fontSize: 11,
+    color: '#6b7280',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  bottomSheetBackground: {
+    backgroundColor: '#ffffff',
+    borderTopWidth: 2,
+    borderTopColor: '#f2a85a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  bottomSheetIndicator: {
+    backgroundColor: '#d1d5db',
+    width: 40,
   },
 });

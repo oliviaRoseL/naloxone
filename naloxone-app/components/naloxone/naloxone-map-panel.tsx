@@ -66,8 +66,5 @@ export function NaloxoneMapPanel({
 const styles = StyleSheet.create({
   map: {
     flex: 1,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#f2a85a',
   },
 });
