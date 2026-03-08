@@ -37,7 +37,6 @@ export default function App() {
     selectedRecordId,
     selectRecord,
     filteredRecords,
-    selectedRecord,
     mapCenter,
   } = useNaloxoneSearch({
     records: DATASET.records,
@@ -79,9 +78,7 @@ export default function App() {
   if (screen === 'map') {
     return (
       <NaloxoneMapListView
-        dataset={DATASET}
         filteredRecords={filteredRecords}
-        selectedRecord={selectedRecord}
         selectedRecordId={selectedRecordId}
         mapCenter={mapCenter}
         locale={locale}

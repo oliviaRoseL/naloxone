@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
@@ -19,14 +19,33 @@ export function NaloxoneMapPanel({
   selectedRecordId,
   onSelectRecord,
 }: NaloxoneMapPanelProps) {
+  const mapRef = useRef<MapView | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    mapRef.current.animateToRegion(
+      {
+        latitude: mapCenter.latitude,
+        longitude: mapCenter.longitude,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
+      },
+      350
+    );
+  }, [mapCenter.latitude, mapCenter.longitude]);
+
   return (
     <MapView
+      ref={mapRef}
       style={styles.map}
       initialRegion={{
         latitude: mapCenter.latitude,
         longitude: mapCenter.longitude,
-        latitudeDelta: 0.35,
-        longitudeDelta: 0.35,
+        latitudeDelta: 0.2,
+        longitudeDelta: 0.2,
       }}
       showsUserLocation
       showsMyLocationButton>
@@ -36,7 +55,7 @@ export function NaloxoneMapPanel({
           coordinate={{ latitude: record.latitude, longitude: record.longitude }}
           title={record[locale].location_name}
           description={`${record[locale].address}, ${record[locale].city}`}
-          pinColor={record.source_record_id === selectedRecordId ? '#d64545' : '#1b4f8c'}
+          pinColor={record.source_record_id === selectedRecordId ? '#fc6b0f' : '#f58e40'}
           onPress={() => onSelectRecord(record.source_record_id)}
         />
       ))}
@@ -47,7 +66,8 @@ export function NaloxoneMapPanel({
 const styles = StyleSheet.create({
   map: {
     flex: 1,
-    marginHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#f2a85a',
   },
 });

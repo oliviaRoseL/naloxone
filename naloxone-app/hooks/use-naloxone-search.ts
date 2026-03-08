@@ -86,7 +86,24 @@ export function useNaloxoneSearch({
         return enPostal.includes(normalizedPostal) || frPostal.includes(normalizedPostal);
       }
 
-      return true;
+      if (!trimmedQuery) {
+        return true;
+      }
+
+      const lowered = trimmedQuery.toLowerCase();
+      const fields = [
+        record.en.location_name,
+        record.fr.location_name,
+        record.en.address,
+        record.fr.address,
+        record.en.city,
+        record.fr.city,
+        record.en.postal_code,
+        record.fr.postal_code,
+      ];
+
+      return fields.some((field) => field.toLowerCase().includes(lowered));
+
     });
 
     matched = matched

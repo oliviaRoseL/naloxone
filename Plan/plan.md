@@ -6,9 +6,13 @@ Build an Expo web app that helps people quickly find naloxone kits and emergency
 ## Product Scope (MVP)
 
 ### 1) Locations of Kits
-- Show nearby naloxone kit locations on a map.
-- Support search by current location, postal code, or city.
-- Display details: source, verification status, availability, and last updated time.
+- Load naloxone locations from `./ingestion/ingestion/output/arcgis_locations.json`.
+- Show nearby naloxone kit locations on a map using `records[].latitude` and `records[].longitude`.
+- Support search by current location, postal code, or city using `en.postal_code`/`fr.postal_code` and `en.city`/`fr.city`.
+- Display localized details from `en` and `fr` records:
+  - `location_name`, `location_type`, `address`, `city`, `postal_code`, `public_health_region`, `telephone`, `additional_information`
+- Show dataset freshness/provenance with `generated_at`, `source_last_edit_ms`, `source_record_id`, and `content_hash`.
+- Treat verification and stock availability as future fields unless a secondary source is added.
 
 ### 2) Emergency Section
 - Prominent emergency call actions.
@@ -99,7 +103,9 @@ Build an Expo web app that helps people quickly find naloxone kits and emergency
 - `user_id`, `is_available`, `schedule_json`, `max_distance_km`, `updated_at`
 
 ### kit_locations
-- `id`, `owner_id` (nullable), `geom` (geography point), `source_type`, `verified`, `stock_status`, `updated_at`
+- `id`, `source_record_id`, `latitude`, `longitude`, `geom` (geography point), `content_hash`, `raw_json`, `created_at`, `updated_at`
+- localized fields: `location_type_en`, `location_type_fr`, `location_name_en`, `location_name_fr`, `address_en`, `address_fr`, `city_en`, `city_fr`, `postal_code_en`, `postal_code_fr`, `public_health_region_en`, `public_health_region_fr`, `telephone_en`, `telephone_fr`, `additional_information_en`, `additional_information_fr`
+- source metadata: `source`, `source_url`, `source_last_edit_ms`, `imported_at`
 
 ### emergency_contacts
 - `id`, `country`, `province`, `city`, `contact_type`, `name`, `phone`, `priority`, `active`

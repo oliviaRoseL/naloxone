@@ -1,121 +1,255 @@
 import React from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import type { AppLocale, NaloxoneDataset, NaloxoneRecord } from '@/types/naloxone';
+import type { AppLocale, NaloxoneRecord } from '@/types/naloxone';
 
 type NaloxoneLocationListProps = {
-  dataset: NaloxoneDataset;
-  selectedRecord: NaloxoneRecord | null;
   selectedRecordId: string | null;
   records: NaloxoneRecord[];
   locale: AppLocale;
+  totalMatches: number;
   onSelectRecord: (recordId: string) => void;
 };
 
 export function NaloxoneLocationList({
-  dataset,
-  selectedRecord,
   selectedRecordId,
   records,
   locale,
+  totalMatches,
   onSelectRecord,
 }: NaloxoneLocationListProps) {
+  const openDirections = async (record: NaloxoneRecord) => {
+    const details = record[locale];
+    const destination = encodeURIComponent(`${details.address}, ${details.city}, ${details.postal_code}`);
+    const url =
+      Platform.OS === 'ios'
+        ? `http://maps.apple.com/?daddr=${destination}`
+        : `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+    await Linking.openURL(url);
+  };
+
+  const callLocation = async (phone: string) => {
+    const normalized = phone.replace(/[^\d+]/g, '');
+    await Linking.openURL(`tel:${normalized}`);
+  };
+
   return (
-    <>
-      <View style={styles.metaCard}>
-        <Text style={styles.metaText}>Generated: {new Date(dataset.generated_at).toLocaleString()}</Text>
-        <Text style={styles.metaText}>Source last edit (ms): {dataset.source_last_edit_ms}</Text>
-        {selectedRecord ? (
-          <Text style={styles.metaText}>
-            Selected source id/hash: {selectedRecord.source_record_id} / {selectedRecord.content_hash.slice(0, 12)}...
-          </Text>
-        ) : null}
+    <View style={styles.sheetContainer}>
+      <View style={styles.sheetHeader}>
+        <Text style={styles.sheetTitle}>{totalMatches} locations nearby</Text>
+        <Text style={styles.sheetMeta}>Showing top {records.length}</Text>
       </View>
 
       <ScrollView style={styles.resultList} contentContainerStyle={styles.resultListContent}>
         {records.map((record) => {
           const details = record[locale];
+          const isSelected = record.source_record_id === selectedRecordId;
+          const subtitle = details.additional_information ?? details.location_type;
+
           return (
             <Pressable
               key={record.source_record_id}
               onPress={() => onSelectRecord(record.source_record_id)}
               style={[
                 styles.resultCard,
-                record.source_record_id === selectedRecordId && styles.resultCardSelected,
+                isSelected && styles.resultCardSelected,
               ]}>
-              <Text style={styles.resultTitle}>{details.location_name}</Text>
-              <Text style={styles.resultLine}>{details.location_type}</Text>
-              <Text style={styles.resultLine}>{details.address}</Text>
-              <Text style={styles.resultLine}>
-                {details.city} {details.postal_code}
-              </Text>
-              <Text style={styles.resultLine}>{details.public_health_region}</Text>
-              <Pressable onPress={() => Linking.openURL(`tel:${details.telephone.replace(/\s+/g, '')}`)}>
-                <Text style={styles.phoneLink}>{details.telephone}</Text>
-              </Pressable>
-              {details.additional_information ? <Text style={styles.resultLine}>{details.additional_information}</Text> : null}
-              <Text style={styles.hashLine}>Record: {record.source_record_id}</Text>
-              <Text style={styles.hashLine}>Hash: {record.content_hash}</Text>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.cardTitleWrap}>
+                  <View style={[styles.statusDot, isSelected ? styles.statusDotSelected : styles.statusDotDefault]} />
+                  <View style={styles.cardTitleTextWrap}>
+                    <Text style={styles.resultTitle}>{details.location_name}</Text>
+                    <Text style={styles.resultAddress}>{details.address}</Text>
+                  </View>
+                </View>
+                <View style={styles.recordBadge}>
+                  <Text style={styles.recordBadgeText}>#{record.source_record_id}</Text>
+                </View>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Ionicons name="time-outline" size={14} color="#6b7280" />
+                <Text style={styles.resultLine}>{subtitle}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Ionicons name="location-outline" size={14} color="#6b7280" />
+                <Text style={styles.resultLine}>
+                  {details.city} {details.postal_code}
+                </Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Ionicons name="business-outline" size={14} color="#6b7280" />
+                <Text style={styles.resultLine}>{details.public_health_region}</Text>
+              </View>
+
+              <View style={styles.cardActions}>
+                <Pressable style={styles.primaryAction} onPress={() => openDirections(record)}>
+                  <Ionicons name="navigate" size={14} color="#ffffff" />
+                  <Text style={styles.primaryActionLabel}>Directions</Text>
+                </Pressable>
+                <Pressable style={styles.secondaryAction} onPress={() => callLocation(details.telephone)}>
+                  <Ionicons name="call-outline" size={14} color="#fc6b0f" />
+                  <Text style={styles.secondaryActionLabel}>Call</Text>
+                </Pressable>
+              </View>
             </Pressable>
           );
         })}
       </ScrollView>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  metaCard: {
-    marginTop: 8,
-    marginHorizontal: 12,
-    backgroundColor: '#dfeaf6',
-    borderRadius: 10,
-    padding: 10,
-    gap: 4,
+  sheetContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 2,
+    borderTopColor: '#f2a85a',
+    paddingTop: 2,
   },
-  metaText: {
-    color: '#173d63',
+  sheetHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#f9fafb',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sheetTitle: {
+    color: '#111827',
     fontSize: 12,
+    fontWeight: '700',
+  },
+  sheetMeta: {
+    color: '#ea580c',
+    fontSize: 12,
+    fontWeight: '600',
   },
   resultList: {
-    maxHeight: 260,
-    marginTop: 8,
+    maxHeight: 300,
   },
   resultListContent: {
     paddingHorizontal: 12,
-    paddingBottom: 24,
-    gap: 8,
+    paddingTop: 10,
+    paddingBottom: 26,
+    gap: 10,
   },
   resultCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#d2dfed',
-    gap: 2,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    gap: 7,
   },
   resultCardSelected: {
-    borderColor: '#1b4f8c',
-    borderWidth: 2,
+    borderColor: '#fc6b0f',
+    backgroundColor: '#fff7ed',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  cardTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 4,
+  },
+  statusDotSelected: {
+    backgroundColor: '#fc6b0f',
+  },
+  statusDotDefault: {
+    backgroundColor: '#f58e40',
+  },
+  cardTitleTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  recordBadge: {
+    borderWidth: 1,
+    borderColor: '#fdba74',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: '#fff7ed',
+  },
+  recordBadgeText: {
+    color: '#b45309',
+    fontSize: 11,
+    fontWeight: '600',
   },
   resultTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#0f2c4a',
+    color: '#111827',
+  },
+  resultAddress: {
+    fontSize: 12,
+    color: '#4b5563',
+    marginTop: 1,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   resultLine: {
-    fontSize: 13,
-    color: '#1e4368',
+    fontSize: 12,
+    color: '#374151',
+    flex: 1,
   },
-  phoneLink: {
-    marginTop: 4,
-    fontSize: 13,
-    color: '#154d86',
-    textDecorationLine: 'underline',
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 2,
   },
-  hashLine: {
-    marginTop: 4,
-    fontSize: 11,
-    color: '#5b7691',
+  primaryAction: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: 8,
+    backgroundColor: '#fc6b0f',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  primaryActionLabel: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  secondaryAction: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#fc6b0f',
+    backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  secondaryActionLabel: {
+    color: '#fc6b0f',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
