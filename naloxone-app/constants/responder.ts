@@ -1,4 +1,5 @@
 import type { ResponderContactMethod, ResponderDataMode, ResponderProfile } from '@/types/responder';
+import { isDesktopWeb } from '@/constants/runtime';
 
 export const RESPONDER_STORAGE_KEY = 'naloxone.responder.profile';
 export const RESPONDER_STORAGE_VERSION = 1;
@@ -10,7 +11,10 @@ export const DATA_MODE: ResponderDataMode =
     ? process.env.EXPO_PUBLIC_RESPONDER_DATA_MODE
     : 'local';
 
-export const RESPONDER_API_URL = process.env.EXPO_PUBLIC_RESPONDER_API_URL?.trim() ?? '';
+const explicitResponderApiUrl = process.env.EXPO_PUBLIC_RESPONDER_API_URL?.trim() ?? '';
+const desktopWebResponderApiUrl = 'http://172.29.240.1:8000';
+
+export const RESPONDER_API_URL = explicitResponderApiUrl || (isDesktopWeb() ? desktopWebResponderApiUrl : '');
 
 export const CONTACT_METHOD_LABELS: Record<ResponderContactMethod, string> = {
   chat: 'In-app chat only',

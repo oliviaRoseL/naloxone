@@ -2,3 +2,4 @@ ingestion\.venv
 /.venv
 __pycache__/
 *.pyc
+/responder-alert-server/.venv

@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useResponderAlertListener } from '@/hooks/use-responder-alert-listener';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -12,6 +13,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  useResponderAlertListener();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

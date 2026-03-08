@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -11,6 +10,7 @@ import {
 import { createHttpResponderRepository } from '@/services/responder/http-repository';
 import { createLocalResponderRepository } from '@/services/responder/local-repository';
 import type { ResponderRepository } from '@/services/responder/repository';
+import { readStorageItem, writeStorageItem } from '@/services/storage/safe-storage';
 import type {
   ResponderContactMethod,
   ResponderProfile,
@@ -19,46 +19,6 @@ import type {
   ToggleConfirmation,
   TrainingStatus,
 } from '@/types/responder';
-
-const memoryStorage = new Map<string, string>();
-
-function getWebLocalStorage() {
-  if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) {
-    return null;
-  }
-
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-async function readStorageItem(key: string) {
-  try {
-    return await AsyncStorage.getItem(key);
-  } catch {
-    const webStorage = getWebLocalStorage();
-    if (webStorage) {
-      return webStorage.getItem(key);
-    }
-    return memoryStorage.get(key) ?? null;
-  }
-}
-
-async function writeStorageItem(key: string, value: string) {
-  try {
-    await AsyncStorage.setItem(key, value);
-    return;
-  } catch {
-    const webStorage = getWebLocalStorage();
-    if (webStorage) {
-      webStorage.setItem(key, value);
-      return;
-    }
-    memoryStorage.set(key, value);
-  }
-}
 
 type ProfileInformationInput = {
   displayName: string;

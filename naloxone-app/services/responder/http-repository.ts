@@ -5,6 +5,11 @@ type CreateHttpResponderRepositoryParams = {
   baseUrl: string;
 };
 
+const RESPONDER_REQUEST_TIMEOUT_MS = 4000;
+const shouldLogNetworkDebug =
+  (typeof __DEV__ !== 'undefined' && __DEV__) || process.env.NODE_ENV !== 'production';
+const loggedBaseUrls = new Set<string>();
+
 function buildPayload(profile: ResponderProfile) {
   return {
     display_name: profile.displayName,
@@ -34,13 +39,24 @@ function buildPayload(profile: ResponderProfile) {
 export function createHttpResponderRepository({
   baseUrl,
 }: CreateHttpResponderRepositoryParams): ResponderRepository {
+  const sanitizedBaseUrl = baseUrl.replace(/\/$/, '');
+
+  if (shouldLogNetworkDebug && !loggedBaseUrls.has(sanitizedBaseUrl)) {
+    console.info(`[network] Responder base URL: ${sanitizedBaseUrl}`);
+    loggedBaseUrls.add(sanitizedBaseUrl);
+  }
+
   return {
     async saveProfile(profile) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      let didTimeout = false;
+      const timeoutId = setTimeout(() => {
+        didTimeout = true;
+        controller.abort();
+      }, RESPONDER_REQUEST_TIMEOUT_MS);
 
       try {
-        const response = await fetch(`${baseUrl.replace(/\/$/, '')}/responder/profile`, {
+        const response = await fetch(`${sanitizedBaseUrl}/responder/profile`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -54,7 +70,16 @@ export function createHttpResponderRepository({
         }
 
         return 'synced';
-      } catch {
+      } catch (error) {
+        if (shouldLogNetworkDebug) {
+          const reason = didTimeout
+            ? `timed out after ${RESPONDER_REQUEST_TIMEOUT_MS}ms`
+            : error instanceof Error
+              ? error.message
+              : 'unknown network error';
+          console.warn(`[network] Responder profile request failed for ${sanitizedBaseUrl}: ${reason}`);
+        }
+
         return 'pending';
       } finally {
         clearTimeout(timeoutId);
