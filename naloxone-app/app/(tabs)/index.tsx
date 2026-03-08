@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, Button, StyleSheet, ScrollView, Linking } from "react-native";
+import { Text, View, Button, StyleSheet, ScrollView, Linking, Platform } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 
 export default function App() {
   const [screen, setScreen] = useState("home");
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -19,7 +19,7 @@ export default function App() {
 
   if (screen === "guide") {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { flexGrow: 1 }]}>
         <Text style={styles.title}>Overdose Response Guide</Text>
 
         <Text style={styles.step}>1. Check if the person responds.</Text>
@@ -36,24 +36,29 @@ export default function App() {
   if (screen === "map" && location) {
     return (
       <View style={{ flex: 1 }}>
-        <MapView
-          style={{ flex: 1 }}
-          initialRegion={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-        >
-          <Marker
-            coordinate={{
-              latitude: location.latitude + 0.01,
-              longitude: location.longitude + 0.01,
+        {Platform.OS !== "web" ? (
+          <MapView
+            style={{ flex: 1 }}
+            initialRegion={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
             }}
-            title="Pharmacy (Naloxone Kits)"
-          />
-        </MapView>
-
+          >
+            <Marker
+              coordinate={{
+                latitude: location.latitude + 0.01,
+                longitude: location.longitude + 0.01,
+              }}
+              title="Pharmacy (Naloxone Kits)"
+            />
+          </MapView>
+        ) : (
+          <Text style={{ textAlign: "center", marginTop: 50 }}>
+            Map is only available on iOS/Android
+          </Text>
+        )}
         <Button title="Back" onPress={() => setScreen("home")} />
       </View>
     );
@@ -68,9 +73,9 @@ export default function App() {
       <Button title="Find Naloxone Nearby" onPress={() => setScreen("map")} />
 
       <Button
-        title="Call Karandeep"
+        title="Call 911"
         color="red"
-        onPress={() => Linking.openURL("tel:6475453226")}
+        onPress={() => Linking.openURL("tel:911")}
       />
     </View>
   );
