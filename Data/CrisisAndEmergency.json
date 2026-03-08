@@ -1,0 +1,128 @@
+{
+  "province": "Ontario",
+  "category": "Crisis Lines",
+  "description": "Regional mental health, addiction, and overdose-related crisis support lines in Ontario.",
+  "resources": [
+    {
+      "name": "988 Suicide Crisis Helpline",
+      "type": "national crisis line",
+      "phone": "988",
+      "text": "988",
+      "available_24_7": true,
+      "coverage": "Canada",
+      "services": [
+        "suicide crisis support",
+        "mental health crisis support",
+        "emotional distress support"
+      ],
+      "notes": "Call or text 988."
+    },
+    {
+      "name": "ConnexOntario",
+      "type": "mental health and addiction helpline",
+      "phone": "1-866-531-2600",
+      "available_24_7": true,
+      "coverage": "Ontario",
+      "services": [
+        "addiction support",
+        "mental health support",
+        "service navigation",
+        "problem gambling support"
+      ],
+      "notes": "Connects people to local addiction, mental health, and related services across Ontario."
+    },
+    {
+      "name": "Here 24/7",
+      "type": "regional crisis line",
+      "phone": "1-844-437-3247",
+      "available_24_7": true,
+      "coverage": "Waterloo-Wellington",
+      "services": [
+        "mental health crisis support",
+        "addiction support",
+        "referrals to local services"
+      ],
+      "notes": "Regional service for Waterloo-Wellington."
+    },
+    {
+      "name": "211 Ontario",
+      "type": "community and social services helpline",
+      "phone": "211",
+      "available_24_7": true,
+      "coverage": "Ontario",
+      "services": [
+        "community services navigation",
+        "health services navigation",
+        "crisis services navigation",
+        "harm reduction referrals"
+      ],
+      "notes": "Helps connect callers to local social, health, and crisis supports."
+    },
+    {
+      "name": "Kids Help Phone",
+      "type": "youth crisis line",
+      "phone": "1-800-668-6868",
+      "text": "CONNECT to 686868",
+      "available_24_7": true,
+      "coverage": "Canada",
+      "services": [
+        "youth mental health support",
+        "crisis counselling",
+        "emotional support"
+      ],
+      "notes": "Available for youth and young adults."
+    },
+    {
+      "name": "Hope for Wellness Helpline",
+      "type": "Indigenous crisis line",
+      "phone": "1-855-242-3310",
+      "available_24_7": true,
+      "coverage": "Canada",
+      "services": [
+        "Indigenous mental health support",
+        "crisis intervention",
+        "culturally grounded support"
+      ],
+      "notes": "Support for Indigenous people across Canada."
+    },
+    {
+      "name": "Talk4Healing",
+      "type": "Indigenous women's helpline",
+      "phone": "1-855-554-4325",
+      "available_24_7": true,
+      "coverage": "Ontario",
+      "services": [
+        "crisis support",
+        "mental health support",
+        "culturally grounded support"
+      ],
+      "notes": "Helpline for Indigenous women in Ontario."
+    },
+    {
+      "name": "Telehealth Ontario",
+      "type": "health advice line",
+      "phone": "811",
+      "available_24_7": true,
+      "coverage": "Ontario",
+      "services": [
+        "non-emergency health advice",
+        "nurse support",
+        "guidance for substance-related health concerns"
+      ],
+      "notes": "Not a dedicated crisis line, but can help with urgent health guidance."
+    },
+    {
+      "name": "Emergency Services",
+      "type": "emergency response",
+      "phone": "911",
+      "available_24_7": true,
+      "coverage": "Ontario",
+      "services": [
+        "emergency medical response",
+        "overdose emergency response",
+        "immediate crisis response"
+      ],
+      "notes": "Call immediately for overdose, unconsciousness, or breathing emergencies."
+    }
+  ]
+}
