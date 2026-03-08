@@ -1,18 +1,31 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const androidNavFallback = Platform.OS === 'android' && insets.bottom < 12 ? 28 : 0;
+  const bottomInset = Math.max(insets.bottom, androidNavFallback);
+
   return (
     <Tabs
       initialRouteName="index"
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 58 + bottomInset,
+            paddingBottom: Math.max(bottomInset, 8),
+            paddingTop: 6,
+          },
+        ],
+        tabBarItemStyle: styles.tabBarItem,
         tabBarActiveTintColor: '#FC6B0F',
         tabBarInactiveTintColor: '#6B7280',
         tabBarLabelStyle: styles.tabBarLabel,
@@ -67,17 +80,19 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 64,
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#d1d5db',
+  },
+  tabBarItem: {
+    paddingTop: 2,
   },
   iconContainer: {
     flex: 1,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 8,
+    paddingTop: 2,
   },
   activeIconContainer: {
     backgroundColor: '#FFDFCC',
@@ -88,7 +103,7 @@ const styles = StyleSheet.create({
   tabBarLabel: {
     fontSize: 12,
     fontWeight: '500',
-    paddingBottom: 8,
+    paddingBottom: 0,
   }
 });
 
