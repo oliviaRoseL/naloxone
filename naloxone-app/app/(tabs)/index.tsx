@@ -1,25 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { Text, View, Button, StyleSheet, ScrollView, Linking, Platform } from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import * as Location from "expo-location";
+import React, { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+
+import { NaloxoneMapListView } from '@/components/naloxone/naloxone-map-list-view';
+import { useNaloxoneSearch } from '@/hooks/use-naloxone-search';
+import type { AppLocale, NaloxoneDataset } from '@/types/naloxone';
+
+const DATASET = require('../../assets/data/arcgis_locations.json') as NaloxoneDataset;
+const MARKER_LIMIT = 250;
+const LIST_LIMIT = 25;
+
+function detectLocale(): AppLocale {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    return locale.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  } catch {
+    return 'en';
+  }
+}
 
 export default function App() {
   const [screen, setScreen] = useState("home");
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState(null);
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationDenied(true);
+        return;
+      }
 
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc.coords);
+      setLocationDenied(false);
+      const current = await Location.getCurrentPositionAsync({});
+      setLocation(current.coords);
     })();
   }, []);
 
   if (screen === "guide") {
     return (
-      <ScrollView contentContainerStyle={[styles.container, { flexGrow: 1 }]}>
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Overdose Response Guide</Text>
 
         <Text style={styles.step}>1. Check if the person responds.</Text>
@@ -36,29 +55,24 @@ export default function App() {
   if (screen === "map" && location) {
     return (
       <View style={{ flex: 1 }}>
-        {Platform.OS !== "web" ? (
-          <MapView
-            style={{ flex: 1 }}
-            initialRegion={{
-              latitude: location.latitude,
-              longitude: location.longitude,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
+        <MapView
+          style={{ flex: 1 }}
+          initialRegion={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: location.latitude + 0.01,
+              longitude: location.longitude + 0.01,
             }}
-          >
-            <Marker
-              coordinate={{
-                latitude: location.latitude + 0.01,
-                longitude: location.longitude + 0.01,
-              }}
-              title="Pharmacy (Naloxone Kits)"
-            />
-          </MapView>
-        ) : (
-          <Text style={{ textAlign: "center", marginTop: 50 }}>
-            Map is only available on iOS/Android
-          </Text>
-        )}
+            title="Pharmacy (Naloxone Kits)"
+          />
+        </MapView>
+
         <Button title="Back" onPress={() => setScreen("home")} />
       </View>
     );
@@ -73,9 +87,9 @@ export default function App() {
       <Button title="Find Naloxone Nearby" onPress={() => setScreen("map")} />
 
       <Button
-        title="Call 911"
+        title="Call Karandeep"
         color="red"
-        onPress={() => Linking.openURL("tel:911")}
+        onPress={() => Linking.openURL("tel:6475453226")}
       />
     </View>
   );
