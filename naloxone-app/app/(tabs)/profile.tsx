@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ActiveResponderCard } from '@/components/responder/active-responder-card';
@@ -20,8 +22,20 @@ function formatStatusLine(status: 'available' | 'offline') {
   return status === 'available' ? 'Available now' : 'Offline now';
 }
 
+async function getBestAvailablePosition() {
+  const lastKnown = await Location.getLastKnownPositionAsync();
+  if (lastKnown) {
+    return lastKnown;
+  }
+
+  return Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+}
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const {
     profile,
     isLoading,
@@ -59,13 +73,55 @@ export default function ProfileScreen() {
     return () => clearTimeout(timeoutId);
   }, [clearConfirmation, confirmation]);
 
+  useEffect(() => {
+    if (
+      profile.serviceArea.approximateLatitude != null &&
+      profile.serviceArea.approximateLongitude != null
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const bootstrapLocation = async () => {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
+        return;
+      }
+
+      const position = await getBestAvailablePosition();
+      if (cancelled || !position) {
+        return;
+      }
+
+      await updateServiceArea({
+        label: profile.serviceArea.label,
+        radiusKm: profile.serviceArea.radiusKm,
+        approximateLatitude: position.coords.latitude,
+        approximateLongitude: position.coords.longitude,
+      });
+    };
+
+    void bootstrapLocation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    profile.serviceArea.approximateLatitude,
+    profile.serviceArea.approximateLongitude,
+    profile.serviceArea.label,
+    profile.serviceArea.radiusKm,
+    updateServiceArea,
+  ]);
+
   const onUseCurrentApproximateLocation = async () => {
     const permission = await Location.requestForegroundPermissionsAsync();
     if (permission.status !== 'granted') {
       return;
     }
 
-    const current = await Location.getCurrentPositionAsync({});
+    const current = await getBestAvailablePosition();
     await updateServiceArea({
       label: profile.serviceArea.label,
       radiusKm: profile.serviceArea.radiusKm,
@@ -117,7 +173,16 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: Math.max(
+              tabBarHeight + (Platform.OS === 'android' ? 30 : 18),
+              Platform.OS === 'android' ? 58 : 38
+            ),
+          },
+        ]}>
         <ActiveResponderCard
           profile={profile}
           onToggle={(enabled) => {

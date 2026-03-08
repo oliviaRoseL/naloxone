@@ -9,6 +9,15 @@ const DATASET = require('../../assets/data/arcgis_locations.json') as NaloxoneDa
 const MARKER_LIMIT = 250;
 const LIST_LIMIT = 25;
 
+async function getBestAvailablePosition() {
+  const lastKnown = await Location.getLastKnownPositionAsync();
+  if (lastKnown) {
+    return lastKnown;
+  }
+
+  return Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+}
+
 function detectLocale(): AppLocale {
   try {
     const locale = Intl.DateTimeFormat().resolvedOptions().locale;
@@ -43,15 +52,24 @@ export default function MapScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationDenied(true);
-        return;
-      }
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationDenied(true);
+          return;
+        }
 
-      setLocationDenied(false);
-      const current = await Location.getCurrentPositionAsync({});
-      setLocation(current.coords);
+        const current = await getBestAvailablePosition();
+        if (!current) {
+          setLocationDenied(true);
+          return;
+        }
+
+        setLocationDenied(false);
+        setLocation(current.coords);
+      } catch {
+        setLocationDenied(true);
+      }
     })();
   }, []);
 
@@ -60,6 +78,7 @@ export default function MapScreen() {
       filteredRecords={filteredRecords}
       selectedRecordId={selectedRecordId}
       mapCenter={mapCenter}
+      userLocation={location}
       locale={locale}
       searchMode={searchMode}
       query={query}

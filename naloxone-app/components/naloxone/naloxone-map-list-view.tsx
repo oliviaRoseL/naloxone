@@ -11,6 +11,7 @@ type NaloxoneMapListViewProps = {
   filteredRecords: NaloxoneRecord[];
   selectedRecordId: string | null;
   mapCenter: NaloxoneRecord;
+  userLocation: { latitude: number; longitude: number } | null;
   locale: AppLocale;
   searchMode: SearchMode;
   query: string;
@@ -27,6 +28,7 @@ export function NaloxoneMapListView({
   filteredRecords,
   selectedRecordId,
   mapCenter,
+  userLocation,
   locale,
   searchMode,
   query,
@@ -98,6 +100,7 @@ export function NaloxoneMapListView({
       <View style={styles.mapContainer}>
         <NaloxoneMapPanel
           mapCenter={mapCenter}
+          userLocation={userLocation}
           markers={mapMarkers}
           locale={locale}
           selectedRecordId={selectedRecordId}

@@ -35,8 +35,10 @@ export function ServiceAreaCard({
     setIsEditing(false);
   };
 
-  const mapLatitude = profile.serviceArea.approximateLatitude ?? 43.6532;
-  const mapLongitude = profile.serviceArea.approximateLongitude ?? -79.3832;
+  const hasCoordinates =
+    profile.serviceArea.approximateLatitude != null && profile.serviceArea.approximateLongitude != null;
+  const mapLatitude = profile.serviceArea.approximateLatitude ?? 0;
+  const mapLongitude = profile.serviceArea.approximateLongitude ?? 0;
   const radiusMeters = Math.max(250, profile.serviceArea.radiusKm * 1000);
 
   return (
@@ -53,36 +55,44 @@ export function ServiceAreaCard({
 
       <View style={styles.content}>
         <View style={styles.mapWrap}>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: mapLatitude,
-              longitude: mapLongitude,
-              latitudeDelta: 0.06,
-              longitudeDelta: 0.06,
-            }}
-            region={{
-              latitude: mapLatitude,
-              longitude: mapLongitude,
-              latitudeDelta: 0.06,
-              longitudeDelta: 0.06,
-            }}
-            pointerEvents="none"
-          >
-            <Circle
-              center={{ latitude: mapLatitude, longitude: mapLongitude }}
-              radius={radiusMeters}
-              fillColor="rgba(232, 180, 134, 0.28)"
-              strokeColor="#E8B486"
-              strokeWidth={3}
-            />
-            <Marker
-              coordinate={{ latitude: mapLatitude, longitude: mapLongitude }}
-              pinColor="#5B78D6"
-              title="Responder area center"
-              description="Approximate location only"
-            />
-          </MapView>
+          {hasCoordinates ? (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: mapLatitude,
+                longitude: mapLongitude,
+                latitudeDelta: 0.06,
+                longitudeDelta: 0.06,
+              }}
+              region={{
+                latitude: mapLatitude,
+                longitude: mapLongitude,
+                latitudeDelta: 0.06,
+                longitudeDelta: 0.06,
+              }}
+              pointerEvents="none"
+            >
+              <Circle
+                center={{ latitude: mapLatitude, longitude: mapLongitude }}
+                radius={radiusMeters}
+                fillColor="rgba(232, 180, 134, 0.28)"
+                strokeColor="#E8B486"
+                strokeWidth={3}
+              />
+              <Marker
+                coordinate={{ latitude: mapLatitude, longitude: mapLongitude }}
+                pinColor="#5B78D6"
+                title="Responder area center"
+                description="Approximate location only"
+              />
+            </MapView>
+          ) : (
+            <View style={styles.mapEmptyState}>
+              <Feather name="map-pin" size={20} color="#A35A23" />
+              <Text style={styles.mapEmptyTitle}>Location not set yet</Text>
+              <Text style={styles.mapEmptySubtitle}>Allow location and tap Use current approximate area.</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.serviceAreaSummary}>
@@ -170,6 +180,24 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapEmptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    backgroundColor: '#EBD5BF',
+  },
+  mapEmptyTitle: {
+    color: '#5A3210',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  mapEmptySubtitle: {
+    color: '#7A4B22',
+    fontSize: 12,
+    textAlign: 'center',
   },
   serviceAreaSummary: {
     gap: 4,
